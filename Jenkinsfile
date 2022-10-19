@@ -1,3 +1,4 @@
+@Library('jenkins-libraries') _
 import com.tomtom.DependencyUtil
 
 stage('check') {
