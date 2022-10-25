@@ -5,6 +5,7 @@ def navKitArtifactVersion = DependencyUtil.getLatestNavKitVersion('main')
 def michiArtifactVersion = DependencyUtil.getLatestMichiVersion('main')
 def navClArtifactVersion = DependencyUtil.getLatestNavClVersion('main')
 
+def needBuildNavkit
 pipeline {
   agent any
 
@@ -35,7 +36,7 @@ pipeline {
 
           script {
             def revision = readFile(file: '/tmp/revision')
-            def needBuildNavkit = compareVersions v1: "$revision", v2: "$navKitArtifactVersion"
+            needBuildNavkit = compareVersions v1: "$revision", v2: "$navKitArtifactVersion"
 
             println("Current navkit revision: $revision")
             println("Current artifactory revision: $navKitArtifactVersion")
@@ -43,36 +44,33 @@ pipeline {
             writeFile(file: '/tmp/needBuildNavkit', text: "${needBuildNavkit}")
 
             println("Should trigger build: $needBuildNavkit")
-            //buildNavkit = readFile('/tmp/needBuildNavkit').trim()
           }
         }
       }
-      stage('test AAR') {
-        when { expression { false } }
+      stage('NavKit-AAR') {
+        when { expression { needBuildNavkit == 1 } }
         steps {
-          echo "Build Navkit"
+          build 'Navkit-AAR'
         }
       }
-      //stage('NavKit-AAR') {
-      //  steps {
-      //    build 'Navkit-AAR'
-      //  }
-      //}
-      //stage('Android-Adaptations') {
-      //  steps {
-      //    build 'Android-Adaptations'
-      //  }
-      //}
-      //stage('Android-RRC') {
-      //  steps {
-      //    build 'Android-RRC'
-      //  }
-      //}
-      //stage('iOS-Cocoapods-NavKit') {
-      //  steps {
-      //    build 'iOS-Cocoapods-NavKit'
-      //  }
-      //}
+      stage('Android-Adaptations') {
+        when { expression { needBuildNavkit == 1 } }
+        steps {
+          build 'Android-Adaptations'
+        }
+      }
+      stage('Android-RRC') {
+        when { expression { needBuildNavkit == 1 } }
+        steps {
+          build 'Android-RRC'
+        }
+      }
+      stage('iOS-Cocoapods-NavKit') {
+        when { expression { needBuildNavkit == 1 } }
+        steps {
+          build 'iOS-Cocoapods-NavKit'
+        }
+      }
     }
 }
 
