@@ -5,6 +5,10 @@ def navKitArtifactVersion = DependencyUtil.getLatestNavKitVersion('main')
 def michiArtifactVersion = DependencyUtil.getLatestMichiVersion('main')
 def navClArtifactVersion = DependencyUtil.getLatestNavClVersion('main')
 
+def navKitMajor = navKitArtifactVersion.substring(0,2)
+def navKitMinor = navKitArtifactVersion.substring(3,5)
+def navKitRevision = navKitArtifactVersion.substring(7)
+
 pipeline {
   agent any
 
@@ -20,11 +24,13 @@ pipeline {
               ]
           )
           sh '''
+          [ -f /tmp/needBuildNavkit ] && rm -f /tmp/needBuildNavkit
           version=$(cat revision.txt | sed "s/revision=//" | sed "s/-SNAPSHOT//")
           major=`echo $version | cut -d. -f1`
           minor=`echo $version | cut -d. -f2`
           revision=`echo $version | cut -d. -f3`
           revision=`expr $revision - 1`
+
           export version=$version
           '''
 
@@ -32,6 +38,10 @@ pipeline {
           echo "- NavKit: ${navKitArtifactVersion}"
           echo "- NavCl: ${navClArtifactVersion}"
           echo "- Michi: ${michiArtifactVersion}"
+
+          echo "- Major: ${navKitMajor}"
+          echo "- Minor: ${navKitMinor}"
+          echo "- Revision: ${navKitRevision}"
         }
       }
       //stage('NavKit-AAR') {
