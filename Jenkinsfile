@@ -28,7 +28,13 @@ pipeline {
                 userRemoteConfigs: [[credentialsId: 'ssh_svc_bitbucket_access', url: 'ssh://git@bitbucket.tomtomgroup.com:7999/nk1ptx/navkit-main-sdk.git']]
               ]
           )
-          sh 'cat revision.txt'
+          sh '''
+          version=$(cat revision.txt | sed "s/revision=//" | sed "s/-SNAPSHOT//")
+          major=`echo $version | cut -d. -f1`
+          minor=`echo $version | cut -d. -f2`
+          revision=`echo $version | cut -d. -f3`
+          revision=`expr $revision - 1`
+          '''
         }
       }
       //stage('NavKit-AAR') {
