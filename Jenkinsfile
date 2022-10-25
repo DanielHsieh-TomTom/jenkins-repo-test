@@ -6,7 +6,7 @@ def michiArtifactVersion = DependencyUtil.getLatestMichiVersion('main')
 def navClArtifactVersion = DependencyUtil.getLatestNavClVersion('main')
 
 pipeline {
-  agent linux
+  agent any
 
     stages {
       stage('Check-version') {
@@ -16,6 +16,19 @@ pipeline {
           echo "- NavKit: ${navKitArtifactVersion}"
           echo "- NavCl: ${navClArtifactVersion}"
           echo "- Michi: ${michiArtifactVersion}"
+        }
+      }
+      stage('checkout-revision') {
+        steps {
+          checkout(
+              [
+                $class: 'GitSCM',
+                branches: [[name: '*/test']],
+                extensions: [[$class: 'CloneOption', depth: 1, noTags: true, reference: '', shallow: true], [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'revision.txt']]]],
+                userRemoteConfigs: [[credentialsId: 'ssh_svc_bitbucket_access', url: 'ssh://git@bitbucket.tomtomgroup.com:7999/nk1ptx/navkit-main-sdk.git']]
+              ]
+          )
+          sh 'cat revision.txt'
         }
       }
       //stage('NavKit-AAR') {
