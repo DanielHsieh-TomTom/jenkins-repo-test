@@ -5,8 +5,6 @@ def navKitArtifactVersion = DependencyUtil.getLatestNavKitVersion('main')
 def michiArtifactVersion = DependencyUtil.getLatestMichiVersion('main')
 def navClArtifactVersion = DependencyUtil.getLatestNavClVersion('main')
 
-def needUpdate = '/tmp/needBuildNavkit'
-
 pipeline {
   agent any
 
@@ -33,20 +31,26 @@ pipeline {
           revision=`echo $version | cut -d. -f3`
           revision=`expr $revision - 1`
           echo "$major.$minor.$revision" > /tmp/revision
-
-          cat /tmp/revision
           '''
 
           script {
             def revision = readFile(file: '/tmp/revision')
-            println(revision)
-
-            def result = compareVersions v1: "$revision", v2: "$navKitArtifactVersion"
+            def needBuildNavkit = compareVersions v1: "$revision", v2: "$navKitArtifactVersion"
 
             println("Current navkit revision: $revision")
             println("Current artifactory revision: $navKitArtifactVersion")
-            println("Should trigger build: $result)
+            println("Should trigger build: $needBuildNavkit")
+            writeFile(file: '/tmp/needBuildNavkit', text: "${needBuildNavkit}")
+
+            println("Should trigger build: $needBuildNavkit")
+            //buildNavkit = readFile('/tmp/needBuildNavkit').trim()
           }
+        }
+      }
+      stage('test AAR') {
+        when { expression { false } }
+        steps {
+          echo "Build Navkit"
         }
       }
       //stage('NavKit-AAR') {
