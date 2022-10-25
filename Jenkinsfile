@@ -5,9 +5,11 @@ def navKitArtifactVersion = DependencyUtil.getLatestNavKitVersion('main')
 def michiArtifactVersion = DependencyUtil.getLatestMichiVersion('main')
 def navClArtifactVersion = DependencyUtil.getLatestNavClVersion('main')
 
-def navKitMajor = navKitArtifactVersion.substring(0,2)
-def navKitMinor = navKitArtifactVersion.substring(3,5)
-def navKitRevision = navKitArtifactVersion.substring(7)
+def artifactoryMajor = navKitArtifactVersion.substring(0,2)
+def artifactoryMinor = navKitArtifactVersion.substring(3,5)
+def artifactoryRevision = navKitArtifactVersion.substring(6)
+
+def needUpdate = '/tmp/needBuildNavkit'
 
 pipeline {
   agent any
@@ -23,6 +25,19 @@ pipeline {
                 userRemoteConfigs: [[credentialsId: 'ssh_svc_bitbucket_access', url: 'ssh://git@bitbucket.tomtomgroup.com:7999/nk1ptx/navkit-main-sdk.git']]
               ]
           )
+
+          echo "- NavKit: ${navKitArtifactVersion}"
+          echo "- NavCl: ${navClArtifactVersion}"
+          echo "- Michi: ${michiArtifactVersion}"
+
+          echo "- Major: ${artifactoryMajor}"
+          echo "- Minor: ${artifactoryMinor}"
+          echo "- Revision: ${artifactoryRevision}"
+
+          sh "export artifactoryMajor=$artifactoryMajor"
+          sh "export artifactoryMinor=$artifactoryMinor"
+          sh "export artifactoryRevision=$artifactoryMinor"
+
           sh '''
           [ -f /tmp/needBuildNavkit ] && rm -f /tmp/needBuildNavkit
           version=$(cat revision.txt | sed "s/revision=//" | sed "s/-SNAPSHOT//")
@@ -32,16 +47,34 @@ pipeline {
           revision=`expr $revision - 1`
 
           export version=$version
+
+          if [ $major -gt $artifactoryMajor ]
+          then
+            echo 1 > $needUpdate
+          elif [ $major -lt $artifactoryMajor ]
+          then
+            echo 0 > $needUpdate
+          else
+            if [ $minor -gt $artifactoryMinor ]
+            then
+              echo 1 > $needUpdate
+            elif [ $minor -lt $artifactoryMinor ]
+          then
+              echo 0 > $needUpdate
+            else
+              if [ $revision -gt $artifactoryRevision ]
+              then
+                echo 1 > $needUpdate
+              else
+                echo 0 > $needUpdate
+              fi
+            fi
+          fi
+
+          cat $needUpdate
           '''
 
           echo "version: \${version}"
-          echo "- NavKit: ${navKitArtifactVersion}"
-          echo "- NavCl: ${navClArtifactVersion}"
-          echo "- Michi: ${michiArtifactVersion}"
-
-          echo "- Major: ${navKitMajor}"
-          echo "- Minor: ${navKitMinor}"
-          echo "- Revision: ${navKitRevision}"
         }
       }
       //stage('NavKit-AAR') {
