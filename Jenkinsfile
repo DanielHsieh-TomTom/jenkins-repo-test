@@ -5,10 +5,6 @@ def navKitArtifactVersion = DependencyUtil.getLatestNavKitVersion('main')
 def michiArtifactVersion = DependencyUtil.getLatestMichiVersion('main')
 def navClArtifactVersion = DependencyUtil.getLatestNavClVersion('main')
 
-def artifactoryMajor = navKitArtifactVersion.substring(0,2)
-def artifactoryMinor = navKitArtifactVersion.substring(3,5)
-def artifactoryRevision = navKitArtifactVersion.substring(6)
-
 def needUpdate = '/tmp/needBuildNavkit'
 
 pipeline {
@@ -30,10 +26,6 @@ pipeline {
           echo "- NavCl: ${navClArtifactVersion}"
           echo "- Michi: ${michiArtifactVersion}"
 
-          echo "- Major: ${artifactoryMajor}"
-          echo "- Minor: ${artifactoryMinor}"
-          echo "- Revision: ${artifactoryRevision}"
-
           sh '''
           version=$(cat revision.txt | sed "s/revision=//" | sed "s/-SNAPSHOT//")
           major=`echo $version | cut -d. -f1`
@@ -44,6 +36,17 @@ pipeline {
 
           cat /tmp/revision
           '''
+
+          script {
+            def revision = readFile(file: '/tmp/revision')
+            println(revision)
+
+            def result = compareVersions v1: "$revision", v2: "$navKitArtifactVersion"
+
+            println("Current navkit revision: $revision")
+            println("Current artifactory revision: $navKitArtifactVersion")
+            println("Should trigger build: $result)
+          }
         }
       }
       //stage('NavKit-AAR') {
