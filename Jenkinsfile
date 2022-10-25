@@ -34,47 +34,16 @@ pipeline {
           echo "- Minor: ${artifactoryMinor}"
           echo "- Revision: ${artifactoryRevision}"
 
-          sh "export artifactoryMajor=$artifactoryMajor"
-          sh "export artifactoryMinor=$artifactoryMinor"
-          sh "export artifactoryRevision=$artifactoryMinor"
-
           sh '''
-          [ -f /tmp/needBuildNavkit ] && rm -f /tmp/needBuildNavkit
           version=$(cat revision.txt | sed "s/revision=//" | sed "s/-SNAPSHOT//")
           major=`echo $version | cut -d. -f1`
           minor=`echo $version | cut -d. -f2`
           revision=`echo $version | cut -d. -f3`
           revision=`expr $revision - 1`
+          echo "$major.$minor.$revision" > /tmp/revision
 
-          export version=$version
-
-          if [ $major -gt $artifactoryMajor ]
-          then
-            echo 1 > $needUpdate
-          elif [ $major -lt $artifactoryMajor ]
-          then
-            echo 0 > $needUpdate
-          else
-            if [ $minor -gt $artifactoryMinor ]
-            then
-              echo 1 > $needUpdate
-            elif [ $minor -lt $artifactoryMinor ]
-          then
-              echo 0 > $needUpdate
-            else
-              if [ $revision -gt $artifactoryRevision ]
-              then
-                echo 1 > $needUpdate
-              else
-                echo 0 > $needUpdate
-              fi
-            fi
-          fi
-
-          cat $needUpdate
+          cat /tmp/revision
           '''
-
-          echo "version: \${version}"
         }
       }
       //stage('NavKit-AAR') {
