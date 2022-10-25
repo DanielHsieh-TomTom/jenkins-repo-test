@@ -9,15 +9,6 @@ pipeline {
   agent any
 
     stages {
-      stage('Check-version') {
-        steps {
-
-          echo "Latest artifact versions:"
-          echo "- NavKit: ${navKitArtifactVersion}"
-          echo "- NavCl: ${navClArtifactVersion}"
-          echo "- Michi: ${michiArtifactVersion}"
-        }
-      }
       stage('checkout-revision') {
         steps {
           checkout(
@@ -34,7 +25,13 @@ pipeline {
           minor=`echo $version | cut -d. -f2`
           revision=`echo $version | cut -d. -f3`
           revision=`expr $revision - 1`
+          export version=$version
           '''
+
+          echo "version: \${version}"
+          echo "- NavKit: ${navKitArtifactVersion}"
+          echo "- NavCl: ${navClArtifactVersion}"
+          echo "- Michi: ${michiArtifactVersion}"
         }
       }
       //stage('NavKit-AAR') {
